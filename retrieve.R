@@ -15,8 +15,8 @@ html_template_end <- read_file("templates/end.html")
 
 
 # Testing: limit to a subset of news releases
-news_releases <- news_releases |> 
-  slice_head(n = 10)
+# news_releases <- news_releases |> 
+#   slice_head(n = 15)
 
 # Generate the current year from the date published field
 news_releases <- news_releases |> 
@@ -107,7 +107,7 @@ for (i in seq_along(news_releases$node_id)) {
   )
   
   # Be gentle to the server between requests!
-  Sys.sleep(0.5)
+  Sys.sleep(1)
   
 }
 
