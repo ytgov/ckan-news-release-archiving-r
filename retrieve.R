@@ -24,6 +24,15 @@ news_releases <- news_releases |>
     year = str_sub(publish_date, 0L, 4L)
   )
 
+# Clean up some poorly-formatted news release numbers
+news_releases <- news_releases |> 
+  mutate(
+    news_release_number = str_replace_all(news_release_number, "#", ""),
+  ) |> 
+  mutate(
+    news_release_number = str_replace_all(news_release_number, "=", "-"),
+  )
+
 retrieve_individual_news_release <- function(page_url, year, news_release_number, language, title, description) {
   
   html_output_path <- path("output", language, year, str_c(news_release_number, ".html"))
@@ -32,6 +41,9 @@ retrieve_individual_news_release <- function(page_url, year, news_release_number
     cat(str_c("- Path ", html_output_path, " already exists.\n"))
     return()
   }
+  
+  # Be gentle to the server between requests!
+  Sys.sleep(1)
   
   news_release_html <- read_html(page_url) |> 
     html_element("main")
@@ -106,8 +118,6 @@ for (i in seq_along(news_releases$node_id)) {
     news_releases$meta_description[i]
   )
   
-  # Be gentle to the server between requests!
-  Sys.sleep(1)
   
 }
 
