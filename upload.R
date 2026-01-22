@@ -5,6 +5,8 @@ library(rmarkdown)
 library(janitor)
 library(ckanr)
 library(httr)
+library(lubridate)
+library(DescTools)
 
 
 # Initial setup -----------------------------------------------------------
@@ -26,6 +28,33 @@ ckanr_setup(
   url = ckan_url, 
   key = ckan_api_token
 )
+
+# Pasted in from retrieve.R
+news_releases <- read_xlsx("input/yukon.ca-news-releases-published-2018-2021.xlsx")
+
+# Testing: limit to a subset of news releases
+news_releases <- news_releases |>
+  # slice_head(n = 10)
+  slice_sample(n = 10)
+
+# Generate the current year from the date published field
+# Plus hilariously over-engineered long date formatting to match previous archive resource titles
+news_releases <- news_releases |> 
+  mutate(
+    year = str_sub(publish_date, 0L, 4L)
+  ) |> 
+  mutate(
+    formatted_date = str_replace(Format(parse_date(publish_date), fmt = "mmmm d, yyyy"), "  ", " ")
+  )
+
+# Clean up some poorly-formatted news release numbers
+news_releases <- news_releases |> 
+  mutate(
+    news_release_number = str_replace_all(news_release_number, "#", ""),
+  ) |> 
+  mutate(
+    news_release_number = str_replace_all(news_release_number, "=", "-"),
+  )
 
 
 # Template text -----------------------------------------------------------
@@ -137,16 +166,71 @@ crul::curl_verbose(data_out = TRUE, data_in = TRUE, info = TRUE, ssl = TRUE)
 crul::set_proxy(crul::proxy(url = "https://127.0.0.1:8888"))
 
 
-parent_dataset <- create_news_release_package_if_needed("2021")
+# parent_dataset <- create_news_release_package_if_needed("2021")
 
-# Create an associated resource
-parent_dataset |> 
-  resource_create(
-    name = "Test 1027",
-    description = "Description field.",
-    upload = path("output", "en", "2018", "18-001.html"),
-    verbose = TRUE,
-    ssl_verifyhost = FALSE,
-    ssl_verifypeer = FALSE
-  )
+# # Create an associated resource
+# parent_dataset |> 
+#   resource_create(
+#     name = "Test 1027",
+#     description = "Description field.",
+#     upload = path("output", "en", "2018", "18-001.html"),
+#     verbose = TRUE,
+#     ssl_verifyhost = FALSE,
+#     ssl_verifypeer = FALSE
+#   )
+
+
+
+# Add resources year-by-year ----------------------------------------------
+
+news_release_years <- news_releases |> 
+  select(year) |> 
+  distinct() |> 
+  arrange(year) |> 
+  pull(year)
+
+
+add_resources_by_year <- function(news_year) {
+  
+  current_year_news_releases <- news_releases |> 
+    filter(year == news_year)
+  
+  cat("For ", news_year, "there are: ")
+  count(current_year_news_releases)
+  
+  # Retrieve the current year's dataset (and create it first if needed)
+  parent_dataset <- create_news_release_package_if_needed(news_year)
+  
+  # Add resources for each row in current_year_news_releases
+  for (i in seq_along(current_year_news_releases$node_id)) { 
+    
+    cat("Uploading resource for ", current_year_news_releases$news_release_number[i], "\n")
+    
+    html_resource_path <- path("output", current_year_news_releases$language[i], current_year_news_releases$year[i], str_c(current_year_news_releases$news_release_number[i], ".html"))
+    
+    cat("From path ", html_resource_path)
+    
+    parent_dataset |> 
+      resource_create(
+        name = str_c(current_year_news_releases$title[i], ", ", current_year_news_releases$formatted_date[i]),
+        description = current_year_news_releases$meta_description[i],
+        upload = html_resource_path,
+        extras = list(
+          created = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873"),
+          last_modified = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873"),
+          metadata_modified = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873")
+          ),
+        verbose = TRUE,
+        ssl_verifyhost = FALSE,
+        ssl_verifypeer = FALSE
+      )
+    
+    Sys.sleep(0.5)
+    
+  }
+  
+  
+}
+
+add_resources_by_year("2018")
 
