@@ -131,10 +131,7 @@ create_news_release_package_if_needed <- function(news_year) {
   result = tryCatch({
     
     package_show(
-      id = package_name,
-      verbose = TRUE,
-      ssl_verifyhost = FALSE,
-      ssl_verifypeer = FALSE
+      id = package_name
       )
 
     
@@ -154,38 +151,12 @@ create_news_release_package_if_needed <- function(news_year) {
         internal_contact_name = "ECO Info",
         publication_required_under_atipp_act = "Yes",
         publication_type_under_atipp_act = "organizational_responsibilities_and_functions"
-      ),
-      
-      verbose = TRUE,
-      ssl_verifyhost = FALSE,
-      ssl_verifypeer = FALSE
+      )
     )
     
-
   })
 
-  
 }
-
-
-crul::set_verbose()
-crul::curl_verbose(data_out = TRUE, data_in = TRUE, info = TRUE, ssl = TRUE)
-
-crul::set_proxy(crul::proxy(url = "https://127.0.0.1:8888"))
-
-
-# parent_dataset <- create_news_release_package_if_needed("2021")
-
-# # Create an associated resource
-# parent_dataset |> 
-#   resource_create(
-#     name = "Test 1027",
-#     description = "Description field.",
-#     upload = path("output", "en", "2018", "18-001.html"),
-#     verbose = TRUE,
-#     ssl_verifyhost = FALSE,
-#     ssl_verifypeer = FALSE
-#   )
 
 
 
@@ -222,10 +193,7 @@ add_resources_by_year <- function(news_year) {
       resource_create(
         name = str_c(current_year_news_releases$title[i], ", ", current_year_news_releases$formatted_date[i]),
         description = current_year_news_releases$meta_description[i],
-        upload = html_resource_path,
-        verbose = TRUE,
-        ssl_verifyhost = FALSE,
-        ssl_verifypeer = FALSE
+        upload = html_resource_path
       )
     
     Sys.sleep(0.5)
@@ -235,7 +203,6 @@ add_resources_by_year <- function(news_year) {
   
 }
 
-# add_resources_by_year("2018")
 
 # For each of the years in the source spreadsheet, add all of that year's resources:
 for (i in seq_along(news_release_years)) { 
@@ -243,3 +210,10 @@ for (i in seq_along(news_release_years)) {
   add_resources_by_year(news_release_years[i])
   
 }
+
+
+run_end_time <- now()
+paste("Start time was:", run_start_time)
+paste("End time was:", run_end_time)
+
+paste("Elapsed time was", round(time_length(interval(run_start_time, run_end_time), "hours"), digits = 2), "hours")
