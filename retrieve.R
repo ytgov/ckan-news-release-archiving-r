@@ -13,15 +13,32 @@ news_releases <- read_xlsx("input/yukon.ca-news-releases-published-2018-2021.xls
 html_template_start <- read_file("templates/start.html")
 html_template_end <- read_file("templates/end.html")
 
+# Today's date in YYYY-MM-DD format:
+meta_archived_date <- str_sub(now(), 0L, 10L)
 
 # Testing: limit to a subset of news releases
-# news_releases <- news_releases |> 
-#   slice_head(n = 15)
+news_releases <- news_releases |>
+  slice_head(n = 5)
 
 # Generate the current year from the date published field
 news_releases <- news_releases |> 
   mutate(
     year = str_sub(publish_date, 0L, 4L)
+  )
+
+# Add a language-specific author string
+# This news release has been archived. For current Government of Yukon news, visit <a href="https://yukon.ca/news">Yukon.ca/news</a>.
+news_releases <- news_releases |> 
+  mutate(
+    author = case_when(
+      language == "fr" ~ "Gouvernement du Yukon",
+      .default = "Government of Yukon"
+    ),
+    archive_alert_message_text = case_when(
+      language == "fr" ~ 'Ce communiqué de presse a été archivé. Pour les dernières nouvelles, visitez <a href="https://yukon.ca/fr/communiques-de-presse">Yukon.ca/fr/communiques-de-presse</a>.',
+      .default = 'This news release has been archived. For current Government of Yukon news, visit <a href="https://yukon.ca/news">Yukon.ca/news</a>.'
+    ),
+    archived_date = meta_archived_date
   )
 
 # Clean up some poorly-formatted news release numbers
@@ -33,7 +50,13 @@ news_releases <- news_releases |>
     news_release_number = str_replace_all(news_release_number, "=", "-"),
   )
 
-retrieve_individual_news_release <- function(page_url, year, news_release_number, language, title, description) {
+# Remove " quote characters from descriptions to be on the safe side.
+news_releases <- news_releases |> 
+  mutate(
+    meta_description = str_replace_all(meta_description, '"', ""),
+  )
+
+retrieve_individual_news_release <- function(page_url, year, news_release_number, language, title, description, author, publish_date, archived_date, archive_alert_message_text) {
   
   html_output_path <- path("output", language, year, str_c(news_release_number, ".html"))
   
@@ -71,9 +94,22 @@ retrieve_individual_news_release <- function(page_url, year, news_release_number
   
   # paste(news_release_html)
   
+  # formatted_html_template_start <- html_template_start |> 
+  #   str_replace("%%TITLE%%", title) |> 
+  #   str_replace("%%DESCRIPTION%%", description)
+  
   formatted_html_template_start <- html_template_start |> 
-    str_replace("%%TITLE%%", title) |> 
-    str_replace("%%DESCRIPTION%%", description)
+    str_glue(
+      title = title, 
+      language = language, 
+      description = description, 
+      author = author, 
+      date = publish_date, 
+      archived_date = archived_date,
+      news_release_number = news_release_number,
+      page_url = page_url,
+      archive_alert_message_text = archive_alert_message_text
+    )
     
   # Update image paths (still loading from Yukon.ca for now)
   # Update Yukon.ca links too
@@ -115,9 +151,12 @@ for (i in seq_along(news_releases$node_id)) {
     news_releases$news_release_number[i],
     news_releases$language[i],
     news_releases$title[i],
-    news_releases$meta_description[i]
+    news_releases$meta_description[i],
+    news_releases$author[i],
+    news_releases$publish_date[i],
+    news_releases$archived_date[i],
+    news_releases$archive_alert_message_text[i]
   )
-  
   
 }
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang=en dir=ltr>
+<html lang={language} dir=ltr>
 
 <head>
     <meta name=generator content="RStudio 2026.01.0+392">
@@ -10,12 +10,27 @@
     <link rel="icon" href="https://open-data-static-files.service.yukon.ca/yukon-bootstrap5-sass-js/favicon.ico">
 
     <meta name=robots content="noindex, follow">
-    <title>%%TITLE%%</title>
-    <meta name=description content="%%DESCRIPTION%%">
+    <title>{title}</title>
+    <meta name=description content="{description}">
+    <meta name=author content="{author}">
+    <meta name=date content="{date}">
+    <meta name=archive_capture_date content="{archived_date}">
+    <meta name=archive_capture_url content="{page_url}">
+    <meta name=news_release_number content="{news_release_number}">
 </head>
 
 <body>
     <div class="yukon-news-release-archive">
+
+        <aside class="d-print-none">
+            <section class="bg-alert-background">
+                <div class="container w-full py-3 text-alert-text">
+                    <div class="row">
+                        <p class="mb-0">{archive_alert_message_text}</p>
+                    </div>
+                </div>
+            </section>
+        </aside>
 
         <div class="container-fluid yt-header-container mb-4">
             <div class="container-lg gx-0 gx-lg-4 py-4 mx-auto">
