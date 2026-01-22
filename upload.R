@@ -80,6 +80,7 @@ template_fr_description <- "Tous les communiqués de presse de {year}.\n\nPour l
 slugify <- function(x) {
   x %>%
     str_to_lower() %>%                        # Convert to lowercase
+    iconv(from = 'UTF-8', to = 'ASCII//TRANSLIT') %>% # Convert accented characters to ASCII before removing non-ASCII below
     str_replace_all("[^a-z0-9\\s-]", "") %>%  # Remove non-alphanumeric (except spaces/hyphens)
     str_squish() %>%                          # Remove extra whitespace
     str_replace_all("\\s+", "-")              # Replace spaces with hyphens
@@ -123,9 +124,16 @@ get_description_by_year <- function(year, language = "en") {
   
 }
 
-create_news_release_package_if_needed <- function(news_year) {
+create_news_release_package_if_needed <- function(news_year, news_language = "en") {
   
-  package_name <- get_name_from_title(get_title_by_year(news_year))
+  package_name <- get_name_from_title(get_title_by_year(news_year, news_language))
+  
+  if(news_language == "en") {
+    language_name = "english"
+  }
+  else {
+    language_name = "french"
+  }
   
   # Check if package exists
   result = tryCatch({
@@ -139,9 +147,9 @@ create_news_release_package_if_needed <- function(news_year) {
     cat("Creating package ", package_name, "!.\n")
     
     package_create(
-      name = get_name_from_title(get_title_by_year(news_year)),
-      title = get_title_by_year(news_year),
-      notes = get_description_by_year(news_year),
+      name = get_name_from_title(get_title_by_year(news_year, news_language)),
+      title = get_title_by_year(news_year, news_language),
+      notes = get_description_by_year(news_year, news_language),
       type = "information",
       license_id = "OGL-Yukon-2.0",
       owner_org = "576049b0-490d-45d2-b236-31aef7a16ffe",
@@ -150,7 +158,8 @@ create_news_release_package_if_needed <- function(news_year) {
         internal_contact_email = "ecoinfo@yukon.ca",
         internal_contact_name = "ECO Info",
         publication_required_under_atipp_act = "Yes",
-        publication_type_under_atipp_act = "organizational_responsibilities_and_functions"
+        publication_type_under_atipp_act = "organizational_responsibilities_and_functions",
+        language = language_name
       )
     )
     
@@ -169,16 +178,17 @@ news_release_years <- news_releases |>
   pull(year)
 
 
-add_resources_by_year <- function(news_year) {
+add_resources_by_year <- function(news_year, news_language = "en") {
   
   current_year_news_releases <- news_releases |> 
-    filter(year == news_year)
+    filter(year == news_year) |> 
+    filter(language == news_language)
   
-  cat("For ", news_year, "there are: ")
+  cat("For ", news_year, " in ", news_language, " there are: ")
   count(current_year_news_releases)
   
   # Retrieve the current year's dataset (and create it first if needed)
-  parent_dataset <- create_news_release_package_if_needed(news_year)
+  parent_dataset <- create_news_release_package_if_needed(news_year, news_language)
   
   # Add resources for each row in current_year_news_releases
   for (i in seq_along(current_year_news_releases$node_id)) { 
@@ -205,9 +215,18 @@ add_resources_by_year <- function(news_year) {
 
 
 # For each of the years in the source spreadsheet, add all of that year's resources:
+
+# English
 for (i in seq_along(news_release_years)) { 
   
-  add_resources_by_year(news_release_years[i])
+  add_resources_by_year(news_release_years[i], "en")
+  
+}
+
+# French
+for (i in seq_along(news_release_years)) { 
+  
+  add_resources_by_year(news_release_years[i], "fr")
   
 }
 
