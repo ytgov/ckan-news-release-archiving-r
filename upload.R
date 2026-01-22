@@ -37,6 +37,7 @@ news_releases <- news_releases |>
   # slice_head(n = 10)
   slice_sample(n = 10)
 
+
 # Generate the current year from the date published field
 # Plus hilariously over-engineered long date formatting to match previous archive resource titles
 news_releases <- news_releases |> 
@@ -56,6 +57,13 @@ news_releases <- news_releases |>
     news_release_number = str_replace_all(news_release_number, "=", "-"),
   )
 
+# Order the news releases by year, language (EN then FR), then reverse chronological date for display on dataset pages
+news_releases <- news_releases |>
+  arrange(
+    desc(year),
+    language,
+    desc(publish_date)
+  )
 
 # Template text -----------------------------------------------------------
 
@@ -215,11 +223,6 @@ add_resources_by_year <- function(news_year) {
         name = str_c(current_year_news_releases$title[i], ", ", current_year_news_releases$formatted_date[i]),
         description = current_year_news_releases$meta_description[i],
         upload = html_resource_path,
-        extras = list(
-          created = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873"),
-          last_modified = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873"),
-          metadata_modified = str_c(current_year_news_releases$publish_date[i],"T18:26:08.256873")
-          ),
         verbose = TRUE,
         ssl_verifyhost = FALSE,
         ssl_verifypeer = FALSE
@@ -232,5 +235,11 @@ add_resources_by_year <- function(news_year) {
   
 }
 
-add_resources_by_year("2018")
+# add_resources_by_year("2018")
 
+# For each of the years in the source spreadsheet, add all of that year's resources:
+for (i in seq_along(news_release_years)) { 
+  
+  add_resources_by_year(news_release_years[i])
+  
+}
