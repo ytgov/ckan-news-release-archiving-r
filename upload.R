@@ -184,8 +184,8 @@ add_resources_by_year <- function(news_year, news_language = "en") {
     filter(year == news_year) |> 
     filter(language == news_language)
   
-  cat("For ", news_year, " in ", news_language, " there are: ")
-  count(current_year_news_releases)
+  cat("\n\nFor ", news_year, " in ", news_language, " there are: ", count(current_year_news_releases)$n, "\n")
+  
   
   # Retrieve the current year's dataset (and create it first if needed)
   parent_dataset <- create_news_release_package_if_needed(news_year, news_language)
@@ -197,7 +197,7 @@ add_resources_by_year <- function(news_year, news_language = "en") {
     
     html_resource_path <- path("output", current_year_news_releases$language[i], current_year_news_releases$year[i], str_c(current_year_news_releases$news_release_number[i], ".html"))
     
-    cat("From path ", html_resource_path)
+    cat("From path ", html_resource_path, "\n")
     
     parent_dataset |> 
       resource_create(
