@@ -60,8 +60,8 @@ html_template_end <- read_file("templates/end.html")
 meta_archived_date <- str_sub(now(), 0L, 10L)
 
 # Testing: limit to a subset of news releases
-news_releases <- news_releases |>
-  slice_head(n = 5)
+# news_releases <- news_releases |>
+#   slice_head(n = 5)
 
 # Generate the current year from the date published field
 news_releases <- news_releases |> 
