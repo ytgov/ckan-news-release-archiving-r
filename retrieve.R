@@ -5,8 +5,51 @@ library(rmarkdown)
 library(janitor)
 library(rvest)
 
+
+# Helper functions --------------------------------------------------------
+
+run_log <- tribble(
+  ~time, ~message
+)
+
+# Logging helper function
+add_log_entry <- function(log_text) {
+  
+  new_row = tibble_row(
+    time = now(),
+    message = log_text
+  )
+  
+  run_log <<- run_log |>
+    bind_rows(
+      new_row
+    )
+  
+  cat(log_text, "\n")
+}
+
+download_log <- tribble(
+  ~time, ~url, ~filesize
+)
+
+add_download_log_entry <- function(url, filesize) {
+  
+  new_row = tibble_row(
+    time = now(),
+    url = url,
+    filesize = filesize
+  )
+  
+  download_log <<- download_log |>
+    bind_rows(
+      new_row
+    )
+}
+
+# Start retrieval process -------------------------------------------------
+
 run_start_time <- now()
-paste("Start time:", run_start_time)
+add_log_entry(str_c("Start time was: ", run_start_time))
 
 news_releases <- read_xlsx("input/yukon.ca-news-releases-published-2018-2021.xlsx")
 
@@ -56,12 +99,14 @@ news_releases <- news_releases |>
     meta_description = str_replace_all(meta_description, '"', ""),
   )
 
+
+
 retrieve_individual_news_release <- function(page_url, year, news_release_number, language, title, description, author, publish_date, archived_date, archive_alert_message_text) {
   
   html_output_path <- path("output", language, year, str_c(news_release_number, ".html"))
   
   if(file_exists(html_output_path)) {
-    cat(str_c("- Path ", html_output_path, " already exists.\n"))
+    add_log_entry(str_c("- Path ", html_output_path, " already exists."))
     return()
   }
   
@@ -118,6 +163,8 @@ retrieve_individual_news_release <- function(page_url, year, news_release_number
     str_replace_all('href="/en/', 'href="https://yukon.ca/en/') |> 
     str_replace_all('href="/fr/', 'href="https://yukon.ca/fr/')
   
+  # Log how much text there was as a retrieval error check
+  add_download_log_entry(page_url, str_length(formatted_news_release_html))
   
   news_release_output <- str_c(
     formatted_html_template_start,
@@ -143,7 +190,7 @@ retrieve_individual_news_release <- function(page_url, year, news_release_number
 #   )
 
 for (i in seq_along(news_releases$node_id)) { 
-  cat("Retrieving", news_releases$page_url[i], "\n")
+  add_log_entry(str_c("Retrieving ", news_releases$page_url[i]))
   
   retrieve_individual_news_release(
     news_releases$page_url[i],
@@ -162,7 +209,34 @@ for (i in seq_along(news_releases$node_id)) {
 
 
 run_end_time <- now()
-paste("Start time was:", run_start_time)
-paste("End time was:", run_end_time)
+run_elapsed_hours <- round(time_length(interval(run_start_time, run_end_time), "hours"), digits = 2)
 
-paste("Elapsed time was", round(time_length(interval(run_start_time, run_end_time), "hours"), digits = 2), "hours")
+add_log_entry(str_c("End time was: ", run_end_time))
+add_log_entry(str_c("Elapsed time was: ", run_elapsed_hours, " hours"))
+
+# Write the log files to CSV:
+run_log |> 
+  write_csv("output_log/run_log.csv")
+
+if(count(download_log) > 0) {
+  download_log |> 
+    write_csv("output_log/download_log.csv")
+}
+
+# Produce a redirects helper file
+# with per-language destination URLs to the publication page:
+redirects_list <- news_releases |> 
+  mutate(
+    from_url = page_url,
+    to_url = case_when(
+      language == "fr" ~ str_c("https://open.yukon.ca/information/communiques-de-presse-", year),
+      .default = str_c("https://open.yukon.ca/information/news-releases-", year)
+    )
+  ) |> select(
+    from_url,
+    to_url,
+    node_id
+  )
+
+redirects_list |> 
+  write_csv("output_log/redirects_list.csv")
