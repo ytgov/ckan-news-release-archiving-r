@@ -11,8 +11,28 @@ library(DescTools)
 
 # Initial setup -----------------------------------------------------------
 
+run_log <- tribble(
+  ~time, ~message
+)
+
+# Logging helper function
+add_log_entry <- function(log_text) {
+  
+  new_row = tibble_row(
+    time = now(),
+    message = log_text
+  )
+  
+  run_log <<- run_log |>
+    bind_rows(
+      new_row
+    )
+  
+  cat(log_text, "\n")
+}
+
 run_start_time <- now()
-paste("Start time:", run_start_time)
+add_log_entry(str_c("Start time was: ", run_start_time))
 
 if(file_exists(".env")) {
   readRenviron(".env")
@@ -45,8 +65,21 @@ news_releases <- news_releases |>
     year = str_sub(publish_date, 0L, 4L)
   ) |> 
   mutate(
-    formatted_date = str_replace(Format(parse_date(publish_date), fmt = "mmmm d, yyyy"), "  ", " ")
+    formatted_date_en = str_replace(Format(parse_date(publish_date), fmt = "mmmm d, yyyy"), "  ", " ")
   )
+
+# Formatted date but in French:
+Sys.setlocale("LC_TIME", "fr_CA.UTF-8")
+
+news_releases <- news_releases |> 
+  mutate(
+    formatted_date_fr = str_replace(Format(parse_date(publish_date), fmt = "le d mmmm yyyy", lang="fr_CA"), "  ", " "),
+    formatted_date = case_when(
+      language == "fr" ~ formatted_date_fr,
+      .default = formatted_date_en
+    )
+  )
+
 
 # Clean up some poorly-formatted news release numbers
 news_releases <- news_releases |> 
@@ -144,7 +177,7 @@ create_news_release_package_if_needed <- function(news_year, news_language = "en
 
     
   }, error = function(e) {
-    cat("Creating package ", package_name, "!.\n")
+    add_log_entry(str_c("Creating package ", package_name))
     
     package_create(
       name = get_name_from_title(get_title_by_year(news_year, news_language)),
@@ -184,7 +217,7 @@ add_resources_by_year <- function(news_year, news_language = "en") {
     filter(year == news_year) |> 
     filter(language == news_language)
   
-  cat("\n\nFor ", news_year, " in ", news_language, " there are: ", count(current_year_news_releases)$n, "\n")
+  add_log_entry(str_c("For ", news_year, " in ", news_language, " there are: ", count(current_year_news_releases)$n, " news releases."))
   
   
   # Retrieve the current year's dataset (and create it first if needed)
@@ -193,11 +226,9 @@ add_resources_by_year <- function(news_year, news_language = "en") {
   # Add resources for each row in current_year_news_releases
   for (i in seq_along(current_year_news_releases$node_id)) { 
     
-    cat("Uploading resource for ", current_year_news_releases$news_release_number[i], "\n")
-    
     html_resource_path <- path("output", current_year_news_releases$language[i], current_year_news_releases$year[i], str_c(current_year_news_releases$news_release_number[i], ".html"))
     
-    cat("From path ", html_resource_path, "\n")
+    add_log_entry(str_c("Uploading resource for ", current_year_news_releases$news_release_number[i], " from path ", html_resource_path))
     
     parent_dataset |> 
       resource_create(
@@ -232,7 +263,12 @@ for (i in seq_along(news_release_years)) {
 
 
 run_end_time <- now()
-paste("Start time was:", run_start_time)
-paste("End time was:", run_end_time)
+run_elapsed_hours <- round(time_length(interval(run_start_time, run_end_time), "hours"), digits = 2)
 
-paste("Elapsed time was", round(time_length(interval(run_start_time, run_end_time), "hours"), digits = 2), "hours")
+add_log_entry(str_c("End time was: ", run_end_time))
+add_log_entry(str_c("Elapsed time was: ", run_elapsed_hours, " hours"))
+
+# Write the log files to CSV:
+run_log |> 
+  write_csv("output_log/upload_log.csv")
+
