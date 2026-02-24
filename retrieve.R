@@ -35,8 +35,8 @@ news_releases <- news_releases |>
       .default = "Government of Yukon"
     ),
     archive_alert_message_text = case_when(
-      language == "fr" ~ 'Ce communiqué de presse a été archivé. Pour les dernières nouvelles, visitez <a href="https://yukon.ca/fr/communiques-de-presse">Yukon.ca/fr/communiques-de-presse</a>.',
-      .default = 'This news release has been archived. For current Government of Yukon news, visit <a href="https://yukon.ca/news">Yukon.ca/news</a>.'
+      language == "fr" ~ 'Ce communiqué a été archivé. <a href="https://yukon.ca/fr/communiques-de-presse">Consulter les derniers communiqués du gouvernement du Yukon</a>.',
+      .default = 'This news release has been archived. <a href="https://yukon.ca/news">View current Government of Yukon news</a>.'
     ),
     archived_date = meta_archived_date
   )
