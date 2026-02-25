@@ -102,8 +102,8 @@ news_releases <- news_releases |>
 template_en_title <- "News releases {year}"
 template_fr_title <- "Communiqués de presse {year}"
 
-template_en_description <- "All {year} news releases.\n\nFor current Government of Yukon news, visit [Yukon.ca/news](https://yukon.ca/news)."
-template_fr_description <- "Tous les communiqués de presse de {year}.\n\nPour les dernières nouvelles, visitez [Yukon.ca/fr/communiques-de-presse](https://yukon.ca/fr/communiques-de-presse)."
+template_en_description <- "All {year} news releases from the Government of Yukon.\n\n[View current Government of Yukon news](https://yukon.ca/news)."
+template_fr_description <- "Tous les communiqués de presse de {year} du gouvernement du Yukon.\n\n[Consulter les derniers communiqués du gouvernement du Yukon](https://yukon.ca/fr/communiques-de-presse)."
 
 
 # Helper functions --------------------------------------------------------
