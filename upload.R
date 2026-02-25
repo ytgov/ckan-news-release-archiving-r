@@ -53,9 +53,8 @@ ckanr_setup(
 news_releases <- read_xlsx("input/yukon.ca-news-releases-published-2018-2021.xlsx")
 
 # Testing: limit to a subset of news releases
-news_releases <- news_releases |>
-  # slice_head(n = 10)
-  slice_sample(n = 10)
+# news_releases <- news_releases |>
+#   slice_sample(n = 10)
 
 
 # Generate the current year from the date published field
