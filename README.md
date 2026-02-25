@@ -40,3 +40,8 @@ Run `upload.R`, which uploads all of the HTML files to open.yukon.ca as individu
 
 If you get an HTTP error or CKAN error, make sure that your API token in `.env` is correct and that you're running the development version of ckanr.
 
+## For more information
+
+Email <sean.boots@yukon.ca> or <eservices@yukon.ca>.
+
+[Find out more about the Government of Yukon's open government program](https://yukon.ca/en/your-government/open-government/learn-about-open-government).
