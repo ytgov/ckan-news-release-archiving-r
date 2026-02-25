@@ -111,7 +111,7 @@ retrieve_individual_news_release <- function(page_url, year, news_release_number
   }
   
   # Be gentle to the server between requests!
-  Sys.sleep(1)
+  Sys.sleep(0.4)
   
   news_release_html <- read_html(page_url) |> 
     html_element("main")
