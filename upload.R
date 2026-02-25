@@ -236,7 +236,7 @@ add_resources_by_year <- function(news_year, news_language = "en") {
         upload = html_resource_path
       )
     
-    Sys.sleep(0.5)
+    Sys.sleep(0.4)
     
   }
   
