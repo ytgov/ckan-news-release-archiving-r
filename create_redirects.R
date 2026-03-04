@@ -189,7 +189,7 @@ generate_nginx_redirect_text <- function(from_url, to_url) {
   
   from_url <- str_replace(from_url, "https://yukon.ca", "")
   
-  template = "location = {from_url} {{ \n  return 302 {to_url}; \n}}\n\n"
+  template = "location = {from_url} {{ \n  return 301 {to_url}; \n}}\n\n"
   
   output <- str_glue(
     template,
